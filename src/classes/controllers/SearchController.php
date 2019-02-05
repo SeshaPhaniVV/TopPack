@@ -1,14 +1,24 @@
 <?php
 namespace TopPack\Controllers;
 
+use \TopPack\models\Repository;
+
+use \TopPack\models\Package;
+
 class SearchController
 {
     protected $container;
+
+    /**
+     *
+     */
+    protected $db;
 
     //this constructor passes the DIC in so we can get our PenFactory out of it later
     function __construct($container)
     {
         $this->container = $container;
+        $this->db = $container->get('database');
     }
 
     function getRepos($request, $response, $args)
@@ -28,8 +38,9 @@ class SearchController
 
         $logger->debug($repositories);
 
-//        var_dump($repositories);
+        $logger->debug("aaaaaaaaaaaaaaaaaaaaaaaa");
 
+        $logger->debug(count($repositories));
 
         $args['response'] = $repositories;
 
@@ -38,12 +49,47 @@ class SearchController
 //        return $this->container->get('renderer')->render($response, 'index.phtml', $args);
     }
 
-    function import($ownername, $reponame, $c) {
+    function import($request, $response, $args) {
+        $logger = $this->container->get('logger');
+
         $githubService = new \TopPack\services\GithubService;
 
-        $githubService->readPackageJson($ownername, $reponame, $c);
-//        return $response->withJson(array("a"=>"b", "c"=>"d"));
+        $githubHelper = new \TopPack\helpers\GithubHelper;
 
+        $repository = new Repository($githubHelper->getRepository($request, $this->container));
 
+        $logger->debug($repository);
+
+        $repoId = $repository['repository_id'];
+
+        $isImported = false;
+
+        if (Repository::where("repository_id", $repoId)->exists()) {
+            $isImported = true;
+            $logger->warning("Repository already exists");
+        }
+
+        $raw_packages = $githubService->readPackageJson($repository['owner_name'], $repository['repo_name'], $this->container);
+
+        $packages = $githubHelper->getPackages($raw_packages, $this->container);
+
+        try {
+            $this->db->getConnection()->transaction(function () use ($repository, $packages, $logger, $isImported) {
+                $logger->debug("Repository :: {$repository}");
+                $logger->debug("Packages :: {$packages}");
+                if ($isImported) {
+                    $logger->error("Unable to save the repository");
+                } else {
+                    $repository->save();
+                    $importedPackages = Package::importPackages($packages, $this->container);
+                    $logger->info($importedPackages);
+                    $repository->packages()->attach($importedPackages);
+                }
+            });
+        } catch (\Exception $e) {
+            $logger->error("Something went wrong");
+        }
+        $logger->info("final Return:: {$packages}");
+        return $packages;
     }
 }

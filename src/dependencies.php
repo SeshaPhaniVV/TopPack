@@ -21,7 +21,7 @@ $container['logger'] = function ($c) {
 };
 
 // Eloquent
-$container['capsule'] = function ($c) {
+$container['database'] = function ($c) {
     $settings = $c->get('settings')['db'];
     $capsule = new Capsule();
     $capsule->addConnection($settings);

@@ -21,7 +21,7 @@ return [
             'driver'    => 'mysql',
             'host'      => 'localhost',
             'database'  => 'orm_test',
-            'username'  => 'root',
+            'username'  => 'vvs',
             'password'  => 'phanisesha575'
         ]
     ],
