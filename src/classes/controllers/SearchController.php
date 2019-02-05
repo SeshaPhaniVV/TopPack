@@ -14,7 +14,7 @@ class SearchController
      */
     protected $db;
 
-    //this constructor passes the DIC in so we can get our PenFactory out of it later
+    //this constructor passes the DIC
     function __construct($container)
     {
         $this->container = $container;
