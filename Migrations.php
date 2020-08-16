@@ -12,7 +12,7 @@ $capsule->addConnection([
     'host'      => 'localhost',
     'database'  => 'orm_test',
     'username'  => 'root',
-    'password'  => 'phanisesha575',
+    'password'  => 'password',
 ]);
 
 $capsule->setAsGlobal();
